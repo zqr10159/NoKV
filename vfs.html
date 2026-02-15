@@ -3,7 +3,7 @@
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
-        <title>Notes - NoKV Docs</title>
+        <title>VFS - NoKV Docs</title>
 
 
         <!-- Custom HTML head -->
@@ -12,34 +12,34 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="theme-color" content="#ffffff">
 
-        <link rel="icon" href="../favicon-de23e50b.svg">
-        <link rel="shortcut icon" href="../favicon-8114d1fc.png">
-        <link rel="stylesheet" href="../css/variables-8adf115d.css">
-        <link rel="stylesheet" href="../css/general-2459343d.css">
-        <link rel="stylesheet" href="../css/chrome-ae938929.css">
-        <link rel="stylesheet" href="../css/print-9e4910d8.css" media="print">
+        <link rel="icon" href="favicon-de23e50b.svg">
+        <link rel="shortcut icon" href="favicon-8114d1fc.png">
+        <link rel="stylesheet" href="css/variables-8adf115d.css">
+        <link rel="stylesheet" href="css/general-2459343d.css">
+        <link rel="stylesheet" href="css/chrome-ae938929.css">
+        <link rel="stylesheet" href="css/print-9e4910d8.css" media="print">
 
         <!-- Fonts -->
-        <link rel="stylesheet" href="../fonts/fonts-9644e21d.css">
+        <link rel="stylesheet" href="fonts/fonts-9644e21d.css">
 
         <!-- Highlight.js Stylesheets -->
-        <link rel="stylesheet" id="mdbook-highlight-css" href="../highlight-493f70e1.css">
-        <link rel="stylesheet" id="mdbook-tomorrow-night-css" href="../tomorrow-night-4c0ae647.css">
-        <link rel="stylesheet" id="mdbook-ayu-highlight-css" href="../ayu-highlight-3fdfc3ac.css">
+        <link rel="stylesheet" id="mdbook-highlight-css" href="highlight-493f70e1.css">
+        <link rel="stylesheet" id="mdbook-tomorrow-night-css" href="tomorrow-night-4c0ae647.css">
+        <link rel="stylesheet" id="mdbook-ayu-highlight-css" href="ayu-highlight-3fdfc3ac.css">
 
         <!-- Custom theme stylesheets -->
-        <link rel="stylesheet" href="../docs/custom-7218a61a.css">
+        <link rel="stylesheet" href="docs/custom-7218a61a.css">
 
 
         <!-- Provide site root and default themes to javascript -->
         <script>
-            const path_to_root = "../";
+            const path_to_root = "";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-68d4371c.js";
+            window.path_to_searchindex_js = "searchindex-68d4371c.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="../toc-cbc9e846.js"></script>
+        <script src="toc-cbc9e846.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -106,7 +106,7 @@
             <!-- populated by js -->
             <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
             <noscript>
-                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+                <iframe class="sidebar-iframe-outer" src="toc.html"></iframe>
             </noscript>
             <div id="mdbook-sidebar-resize-handle" class="sidebar-resize-handle">
                 <div class="sidebar-resize-indicator"></div>
@@ -141,7 +141,7 @@
                     <h1 class="menu-title">NoKV Docs</h1>
 
                     <div class="right-buttons">
-                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                        <a href="print.html" title="Print this book" aria-label="Print this book">
                             <span class=fa-svg id="print-button"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M128 0C92.7 0 64 28.7 64 64v96h64V64H354.7L384 93.3V160h64V93.3c0-17-6.7-33.3-18.7-45.3L400 18.7C388 6.7 371.7 0 354.7 0H128zM384 352v32 64H128V384 368 352H384zm64 32h32c17.7 0 32-14.3 32-32V256c0-35.3-28.7-64-64-64H64c-35.3 0-64 28.7-64 64v96c0 17.7 14.3 32 32 32H64v64c0 35.3 28.7 64 64 64H384c35.3 0 64-28.7 64-64V384zm-16-88c-13.3 0-24-10.7-24-24s10.7-24 24-24s24 10.7 24 24s-10.7 24-24 24z"/></svg></span>
                         </a>
                         <a href="https://github.com/feichai0017/NoKV" title="Git repository" aria-label="Git repository">
@@ -178,32 +178,114 @@
 
                 <div id="mdbook-content" class="content">
                     <main>
-                        <h1 id="notes"><a class="header" href="#notes">Notes</a></h1>
-<p>Use this folder to capture per-debug or per-investigation notes. Keep entries short, factual, and easy to skim.</p>
-<h2 id="add-a-new-note"><a class="header" href="#add-a-new-note">Add a new note</a></h2>
+                        <h1 id="vfs"><a class="header" href="#vfs">VFS</a></h1>
+<p>The <code>vfs</code> package defines a unified filesystem abstraction used by NoKV storage paths (<code>wal</code>, <code>manifest</code>, <code>vlog</code>, <code>file</code>, and parts of <code>raftstore</code>).</p>
+<p>It is intentionally small and focused:</p>
+<ul>
+<li>Keep production code independent from direct <code>os.*</code> calls.</li>
+<li>Make fault-path testing deterministic.</li>
+<li>Keep the same call shape in embedded and distributed modes.</li>
+</ul>
+<hr>
+<h2 id="1-design-goals"><a class="header" href="#1-design-goals">1. Design Goals</a></h2>
 <ol>
-<li>Create a new file in <code>docs/notes/</code> named <code>YYYY-MM-DD-short-title.md</code>.</li>
-<li>Add it to <code>docs/SUMMARY.md</code> under Notes.</li>
-<li>Use the template below to keep entries consistent.</li>
+<li>One filesystem API for all persistence-critical modules.</li>
+<li>Explicit file-handle operations (<code>OpenHandle</code> / <code>OpenFileHandle</code>) so injected failures can target both path-level and handle-level behavior.</li>
+<li>Test-first error injection without adding module-local test hooks.</li>
 </ol>
-<h2 id="template"><a class="header" href="#template">Template</a></h2>
-<h3 id="context"><a class="header" href="#context">Context</a></h3>
-<h3 id="symptom"><a class="header" href="#symptom">Symptom</a></h3>
-<h3 id="repro"><a class="header" href="#repro">Repro</a></h3>
-<h3 id="investigation"><a class="header" href="#investigation">Investigation</a></h3>
-<h3 id="root-cause"><a class="header" href="#root-cause">Root cause</a></h3>
-<h3 id="fix"><a class="header" href="#fix">Fix</a></h3>
-<h3 id="follow-ups"><a class="header" href="#follow-ups">Follow-ups</a></h3>
+<hr>
+<h2 id="2-core-interfaces"><a class="header" href="#2-core-interfaces">2. Core Interfaces</a></h2>
+<p><code>vfs.FS</code> (namespace-level operations):</p>
+<ul>
+<li>open/create (<code>OpenHandle</code>, <code>OpenFileHandle</code>)</li>
+<li>path ops (<code>MkdirAll</code>, <code>Remove</code>, <code>RemoveAll</code>, <code>Rename</code>, <code>Stat</code>, <code>ReadDir</code>, <code>Glob</code>)</li>
+<li>whole-file helpers (<code>ReadFile</code>, <code>WriteFile</code>, <code>Truncate</code>)</li>
+</ul>
+<p><code>vfs.File</code> (handle-level operations):</p>
+<ul>
+<li><code>Read</code> / <code>ReadAt</code></li>
+<li><code>Write</code> / <code>WriteAt</code></li>
+<li><code>Seek</code></li>
+<li><code>Sync</code></li>
+<li><code>Truncate</code></li>
+<li><code>Close</code></li>
+<li><code>Fd</code></li>
+</ul>
+<p><code>vfs.OSFS</code> is the production implementation backed by the Go <code>os</code> package.<br><code>vfs.Ensure(fs)</code> normalizes <code>nil</code> to <code>OSFS</code>, so call sites can safely accept an optional <code>vfs.FS</code>.</p>
+<hr>
+<h2 id="3-fault-injection-model"><a class="header" href="#3-fault-injection-model">3. Fault Injection Model</a></h2>
+<p>NoKV provides <code>FaultFS</code> with rule-based injection:</p>
+<ul>
+<li><code>FailOnceRule</code></li>
+<li><code>FailOnNthRule</code></li>
+<li><code>FailAfterNthRule</code></li>
+</ul>
+<p>Rules can match by operation + path, and for rename by src/dst path.</p>
+<h3 id="31-file-handle-level-injection-faultfile"><a class="header" href="#31-file-handle-level-injection-faultfile">3.1 File-Handle-Level Injection (<code>FaultFile</code>)</a></h3>
+<p>When <code>OpenHandle</code>/<code>OpenFileHandle</code> succeeds, the returned handle is wrapped as <code>faultFile</code>.
+<code>faultFile</code> supports deterministic failures on:</p>
+<ul>
+<li><code>Write</code> / <code>WriteAt</code> (<code>OpFileWrite</code>)</li>
+<li><code>Sync</code> (<code>OpFileSync</code>)</li>
+<li><code>Close</code> (<code>OpFileClose</code>)</li>
+<li><code>Truncate</code> (<code>OpFileTrunc</code>)</li>
+</ul>
+<p>This is used to validate rollback and retry behavior for close/sync/truncate paths in WAL/Manifest verification and shutdown flows.</p>
+<hr>
+<h2 id="4-where-it-is-used"><a class="header" href="#4-where-it-is-used">4. Where It Is Used</a></h2>
+<ul>
+<li><code>wal</code>: segment switch, close, verify/truncate.</li>
+<li><code>manifest</code>: edit logging, rewrite, verify, close.</li>
+<li><code>vlog</code>: verify/truncate and file open path.</li>
+<li><code>file</code>: mmap open/sync directory path via <code>vfs</code>.</li>
+<li><code>utils</code>: dir lock and directory sync helpers.</li>
+<li><code>raftstore/engine</code>: disk storage and snapshot import/export.</li>
+</ul>
+<hr>
+<h2 id="5-comparison-with-pebble-vfs"><a class="header" href="#5-comparison-with-pebble-vfs">5. Comparison with Pebble VFS</a></h2>
+<p>NoKV’s design is inspired by Pebble’s VFS layering and error-injection philosophy, while intentionally keeping a smaller surface area.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Aspect</th><th>Pebble VFS</th><th>NoKV VFS</th></tr>
+</thead>
+<tbody>
+<tr><td>API scope</td><td>Broad FS API (create/open/open-dir/link/reuse/lock/list/path helpers/disk usage)</td><td>Minimal API required by NoKV storage paths</td></tr>
+<tr><td>Wrapping model</td><td>Rich wrappers (<code>WithDiskHealthChecks</code>, <code>OnDiskFull</code>, logging wrappers)</td><td><code>FaultFS</code> focused on deterministic fault tests</td></tr>
+<tr><td>In-memory FS</td><td>Built-in <code>MemFS</code> / <code>StrictMem</code> for advanced test semantics</td><td>Not yet built-in (currently wraps real FS with injected errors)</td></tr>
+<tr><td>Error injection</td><td>Dedicated <code>errorfs</code> package and injector model</td><td>Built-in policy/rule model in <code>FaultFS</code></td></tr>
+<tr><td>Handle-level faulting</td><td>Supports wrapped file behavior through wrappers</td><td><code>FaultFile</code> with count-based fail on <code>Write/Sync/Close/Truncate</code></td></tr>
+</tbody>
+</table>
+</div>
+<p>Practical interpretation:</p>
+<ul>
+<li>Pebble is a general-purpose storage-engine VFS toolkit.</li>
+<li>NoKV currently implements the subset needed for its engine and recovery semantics, with strong testability on critical failure paths.</li>
+</ul>
+<hr>
+<h2 id="6-current-gaps-and-next-steps"><a class="header" href="#6-current-gaps-and-next-steps">6. Current Gaps and Next Steps</a></h2>
+<ol>
+<li>Add an in-memory <code>FS</code> implementation for fully isolated IO tests.</li>
+<li>Add optional disk-health and slow-IO instrumentation wrappers.</li>
+<li>Consider adding higher-level primitives where needed (<code>Lock</code>, <code>OpenDir</code>, hard-link/reuse helpers), but only when justified by real call sites.</li>
+</ol>
+<hr>
+<h2 id="7-references"><a class="header" href="#7-references">7. References</a></h2>
+<ul>
+<li>Pebble <code>vfs</code>: <a href="https://pkg.go.dev/github.com/cockroachdb/pebble/vfs">https://pkg.go.dev/github.com/cockroachdb/pebble/vfs</a></li>
+<li>Pebble <code>errorfs</code>: <a href="https://pkg.go.dev/github.com/cockroachdb/pebble/vfs/errorfs">https://pkg.go.dev/github.com/cockroachdb/pebble/vfs/errorfs</a></li>
+</ul>
 
                     </main>
 
                     <nav class="nav-wrapper" aria-label="Page navigation">
                         <!-- Mobile navigation buttons -->
-                            <a rel="prev" href="../nokv-redis.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                            <a rel="prev" href="manifest.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                                 <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M41.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.3 256 246.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/></svg></span>
                             </a>
 
-                            <a rel="next prefetch" href="../notes/2026-01-16-mmap-choice.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                            <a rel="next prefetch" href="file.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                                 <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z"/></svg></span>
                             </a>
 
@@ -213,11 +295,11 @@
             </div>
 
             <nav class="nav-wide-wrapper" aria-label="Page navigation">
-                    <a rel="prev" href="../nokv-redis.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                    <a rel="prev" href="manifest.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                         <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M41.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.3 256 246.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/></svg></span>
                     </a>
 
-                    <a rel="next prefetch" href="../notes/2026-01-16-mmap-choice.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                    <a rel="next prefetch" href="file.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                         <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z"/></svg></span>
                     </a>
             </nav>
@@ -237,16 +319,16 @@
         </script>
 
 
-        <script src="../elasticlunr-ef4e11c1.min.js"></script>
-        <script src="../mark-09e88c2c.min.js"></script>
-        <script src="../searcher-c2a407aa.js"></script>
+        <script src="elasticlunr-ef4e11c1.min.js"></script>
+        <script src="mark-09e88c2c.min.js"></script>
+        <script src="searcher-c2a407aa.js"></script>
 
-        <script src="../clipboard-1626706a.min.js"></script>
-        <script src="../highlight-abc7f01d.js"></script>
-        <script src="../book-a0b12cfe.js"></script>
+        <script src="clipboard-1626706a.min.js"></script>
+        <script src="highlight-abc7f01d.js"></script>
+        <script src="book-a0b12cfe.js"></script>
 
         <!-- Custom JS scripts -->
-        <script src="../docs/mermaid-init-8a66ee6c.js"></script>
+        <script src="docs/mermaid-init-8a66ee6c.js"></script>
 
 
 
