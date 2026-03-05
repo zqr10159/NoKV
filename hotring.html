@@ -36,10 +36,10 @@
             const path_to_root = "";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-68d4371c.js";
+            window.path_to_searchindex_js = "searchindex-9a9267e6.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="toc-cbc9e846.js"></script>
+        <script src="toc-56d2c64c.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -179,7 +179,7 @@
                 <div id="mdbook-content" class="content">
                     <main>
                         <h1 id="hotring--hot-key-tracking"><a class="header" href="#hotring--hot-key-tracking">HotRing – Hot Key Tracking</a></h1>
-<p><code>hotring</code> is NoKV’s hot-key tracker. It samples read/write access frequency per key and exposes the hottest entries to the stats subsystem and CLI. The implementation lives in the standalone module <a href="https://github.com/feichai0017/hotring"><code>github.com/feichai0017/hotring</code></a>.</p>
+<p><code>hotring</code> is NoKV’s hot-key tracker. It samples read/write access frequency per key and exposes the hottest entries to the stats subsystem and CLI. The implementation lives in <a href="../hotring"><code>hotring/</code></a> inside this repository.</p>
 <hr>
 <h2 id="1-motivation"><a class="header" href="#1-motivation">1. Motivation</a></h2>
 <ul>
@@ -196,7 +196,7 @@
   hashMask -&gt; selects bucket (power of two size)
 </code></pre>
 <ul>
-<li>Each bucket stores a sorted linked list of <a href="https://github.com/feichai0017/hotring/blob/main/node.go"><code>Node</code></a> ordered by <code>(tag, key)</code>, where <code>tag</code> is derived from the upper bits of the hash. Head pointers are <code>atomic.Pointer[Node]</code>, so readers walk the list without taking locks; writers use CAS to splice nodes while preserving order.</li>
+<li>Each bucket stores a sorted linked list of <a href="../hotring/node.go"><code>Node</code></a> ordered by <code>(tag, key)</code>, where <code>tag</code> is derived from the upper bits of the hash. Head pointers are <code>atomic.Pointer[Node]</code>, so readers walk the list without taking locks; writers use CAS to splice nodes while preserving order.</li>
 <li><code>defaultTableBits = 12</code> → 4096 buckets by default (<code>NewHotRing</code>). The mask ensures cheap modulo operations.</li>
 <li>Nodes keep a <code>count</code> (int32) updated atomically and a <code>next</code> pointer stored via <code>unsafe.Pointer</code>. Sliding-window state is guarded by a tiny per-node spin lock instead of a process-wide mutex.</li>
 </ul>
@@ -216,11 +216,11 @@
 <tr><th>Method</th><th>Behaviour</th><th>Notes</th></tr>
 </thead>
 <tbody>
-<tr><td><a href="https://github.com/feichai0017/hotring/blob/main/hotring.go"><code>Touch</code></a></td><td>Insert or increment key’s counter.</td><td>CAS-splices a new node if missing, then increments (window-aware when enabled).</td></tr>
-<tr><td><a href="https://github.com/feichai0017/hotring/blob/main/hotring.go"><code>Frequency</code></a></td><td>Read-only counter lookup.</td><td>Lock-free lookup; uses sliding-window totals when configured.</td></tr>
-<tr><td><a href="https://github.com/feichai0017/hotring/blob/main/hotring.go"><code>TouchAndClamp</code></a></td><td>Increment unless <code>count &gt;= limit</code>, returning <code>(count, limited)</code>.</td><td>Throttling follows sliding-window totals so hot bursts clamp quickly.</td></tr>
-<tr><td><a href="https://github.com/feichai0017/hotring/blob/main/hotring.go"><code>TopN</code></a></td><td>Snapshot hottest keys sorted by count desc.</td><td>Walks buckets without locks, then sorts a copy.</td></tr>
-<tr><td><a href="https://github.com/feichai0017/hotring/blob/main/hotring.go"><code>KeysAbove</code></a></td><td>Return all keys with counters ≥ threshold.</td><td>Handy for targeted throttling or debugging hot shards.</td></tr>
+<tr><td><a href="../hotring/hotring.go"><code>Touch</code></a></td><td>Insert or increment key’s counter.</td><td>CAS-splices a new node if missing, then increments (window-aware when enabled).</td></tr>
+<tr><td><a href="../hotring/hotring.go"><code>Frequency</code></a></td><td>Read-only counter lookup.</td><td>Lock-free lookup; uses sliding-window totals when configured.</td></tr>
+<tr><td><a href="../hotring/hotring.go"><code>TouchAndClamp</code></a></td><td>Increment unless <code>count &gt;= limit</code>, returning <code>(count, limited)</code>.</td><td>Throttling follows sliding-window totals so hot bursts clamp quickly.</td></tr>
+<tr><td><a href="../hotring/hotring.go"><code>TopN</code></a></td><td>Snapshot hottest keys sorted by count desc.</td><td>Walks buckets without locks, then sorts a copy.</td></tr>
+<tr><td><a href="../hotring/hotring.go"><code>KeysAbove</code></a></td><td>Return all keys with counters ≥ threshold.</td><td>Handy for targeted throttling or debugging hot shards.</td></tr>
 </tbody>
 </table>
 </div>
@@ -228,7 +228,7 @@
 <hr>
 <h2 id="4-integration-points"><a class="header" href="#4-integration-points">4. Integration Points</a></h2>
 <ul>
-<li><strong>DB reads</strong> – <code>Txn.Get</code> and iterators call <code>db.recordRead</code>, which invokes <code>HotRing.Touch</code> on a <strong>read-only ring</strong> for every successful lookup.</li>
+<li><strong>DB reads</strong> – <code>DB.Get*</code> and iterators call <code>db.recordRead</code>, which invokes <code>HotRing.Touch</code> on a <strong>read-only ring</strong> for every successful lookup.</li>
 <li><strong>Write throttling &amp; hot batching</strong> – writes are tracked by a <strong>write-only ring</strong>. When <code>Options.WriteHotKeyLimit &gt; 0</code>, writes use <code>TouchAndClamp</code> to enforce throttling; when throttling is disabled but <code>HotWriteBurstThreshold &gt; 0</code>, writes still <code>Touch</code> so hot batching can trigger.</li>
 <li><strong>Stats</strong> – <code>StatsSnapshot.Hot.ReadKeys</code> and <code>StatsSnapshot.Hot.WriteKeys</code> publish read/write hot keys. <code>expvar</code> exposes these under <code>NoKV.Stats.hot.read_keys</code> and <code>NoKV.Stats.hot.write_keys</code>.</li>
 <li><strong>Caching</strong> – hot reads trigger asynchronous prefetch into the normal L0/L1 block cache path.</li>
@@ -303,7 +303,7 @@ settings. When override is enabled, <strong>zeros disable features</strong> (exc
 which falls back to the ring default).</p>
 <hr>
 <h2 id="7-write-path-throttling"><a class="header" href="#7-write-path-throttling">7. Write-Path Throttling</a></h2>
-<p><code>Options.WriteHotKeyLimit</code> wires the write-only HotRing into the write path. When set to a positive integer, every call to <code>DB.Set*</code> or transactional <code>Txn.Set*</code> invokes <code>HotRing.TouchAndClamp</code> with the limit. Once a key (optionally scoped by column family via <code>cfHotKey</code>) reaches the limit, the write is rejected with <code>utils.ErrHotKeyWriteThrottle</code>. If throttling is disabled but <code>HotWriteBurstThreshold &gt; 0</code>, the write ring still tracks frequency to enable hot write batching. This keeps pathological tenants or hot shards from overwhelming a single Raft group without adding heavyweight rate-limiters to the client stack.</p>
+<p><code>Options.WriteHotKeyLimit</code> wires the write-only HotRing into the write path. When set to a positive integer, user writes (<code>DB.Set</code>, <code>DB.SetWithTTL</code>) and internal writes (<code>DB.ApplyInternalEntries</code>) invoke <code>HotRing.TouchAndClamp</code> with the limit. Once a key (optionally scoped by column family via <code>cfHotKey</code>) reaches the limit, the write is rejected with <code>utils.ErrHotKeyWriteThrottle</code>. If throttling is disabled but <code>HotWriteBurstThreshold &gt; 0</code>, the write ring still tracks frequency to enable hot write batching. This keeps pathological tenants or hot shards from overwhelming a single Raft group without adding heavyweight rate-limiters to the client stack.</p>
 <p>Operational hints:</p>
 <ul>
 <li><code>StatsSnapshot.Write.HotKeyLimited</code> and the CLI line <code>Write.HotKeyThrottled</code> expose how many writes were rejected since the process started.</li>
@@ -402,7 +402,7 @@ inherits the global <code>HotRing*</code> configuration.</p>
                                 <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M41.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.3 256 246.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/></svg></span>
                             </a>
 
-                            <a rel="next prefetch" href="txn.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                            <a rel="next prefetch" href="percolator.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                                 <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z"/></svg></span>
                             </a>
 
@@ -416,7 +416,7 @@ inherits the global <code>HotRing*</code> configuration.</p>
                         <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M41.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.3 256 246.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/></svg></span>
                     </a>
 
-                    <a rel="next prefetch" href="txn.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                    <a rel="next prefetch" href="percolator.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                         <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z"/></svg></span>
                     </a>
             </nav>
